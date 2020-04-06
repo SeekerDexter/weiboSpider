@@ -209,10 +209,12 @@ class MysqlWriter:
     def write_user(self, user):
         """将爬取的用户信息写入MySQL数据库"""
         self.user = user
-        # 创建'weibo'数据库
-        create_database = """CREATE DATABASE IF NOT EXISTS weibo DEFAULT
-                         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"""
-        self.mysql_create_database(create_database)
+        exist_db = self.config['mysql_config'].get('db', False)
+        if not exist_db:
+            # 创建'weibo'数据库
+            create_database = """CREATE DATABASE IF NOT EXISTS weibo DEFAULT
+                             CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"""
+            self.mysql_create_database(create_database)
         # 创建'user'表
         create_table = """
                 CREATE TABLE IF NOT EXISTS user (
@@ -281,7 +283,7 @@ class MysqlWriter:
         """创建MySQL表"""
         import pymysql
         mysql_config = self.config['mysql_config']
-        mysql_config['db'] = 'weibo'
+        mysql_config['db'] = self.config['mysql_config'].get('db', 'weibo')
         connection = pymysql.connect(**mysql_config)
         self.mysql_create(connection, sql)
 
@@ -293,7 +295,7 @@ class MysqlWriter:
         if len(data_list) > 0:
             keys = ', '.join(data_list[0].keys())
             values = ', '.join(['%s'] * len(data_list[0]))
-            mysql_config['db'] = 'weibo'
+            mysql_config['db'] = self.config['mysql_config'].get('db', 'weibo')
             connection = pymysql.connect(**mysql_config)
             cursor = connection.cursor()
             sql = """INSERT INTO {table}({keys}) VALUES ({values}) ON
